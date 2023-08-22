@@ -457,12 +457,12 @@ int uniform_cue_colour;
             }
         }
     }
-
     private void updateCues(uint idsrc)
     {
         if (table.is4Ball) updateFourBallCues();
         else if (table.is9Ball) updateNineBallCues();
         else if (table.is8Ball) updateEightBallCues(idsrc);
+        else if (table.isSnooker6Red) updateFourBallCues();
 
         if (table.isPracticeMode)
         {
@@ -490,7 +490,7 @@ int uniform_cue_colour;
 
     private void updateTable(uint teamId)
     {
-        if (table.is4Ball)
+        if (table.is4Ball || table.isSnooker6Red)
         {
             if ((teamId ^ table.teamColorLocal) == 0)
             {
@@ -696,15 +696,7 @@ int uniform_cue_colour;
             pClothColour = table.k_fabricColour_8ball;
         }
 
-        if (table.table.name == "glass")
-        {
-            tableMaterial.SetColor(uniform_clothcolour, new Color(pClothColour.r, pClothColour.g, pClothColour.g, 117.0f / 255.0f));
-        }
-        else
-        {
-            tableMaterial.SetTexture("_MainTex", table.tableSkins[table.tableSkinLocal]);
-            // tableMaterial.SetColor(uniform_clothcolour, pClothColour);
-        }
+        tableMaterial.SetTexture("_MainTex", table.tableSkins[table.tableSkinLocal]);
     }
 
     public void _DisableObjects()
@@ -758,11 +750,6 @@ int uniform_cue_colour;
             scorecardColors[0] = table.k_colour4Ball_team_0;
             scorecardColors[1] = table.k_colour4Ball_team_1;
             scorecard.SetColorArray("_Colors", scorecardColors);
-        }
-        if (table.isSnooker6Red)
-        {
-            scorecardColors[0] = table.k_teamColour_stripes;
-            scorecardColors[1] = table.k_teamColour_spots;
         }
         else
         {
