@@ -209,19 +209,8 @@ public class DesktopManager : UdonSharpBehaviour
 
                         if (power > 0)
                         {
-                            if (table._IsLegacyPhysics())
-                            {
-                                table.currentPhysicsManager.SetProgramVariable("multiplier", -25.0f);
-                                table.currentPhysicsManager.SetProgramVariable("cue_vdir", initialShotDirection.normalized);
-                                float vel = Mathf.Pow(power * 2.0f, 1.4f) * 9.0f;
-                                table.currentPhysicsManager.SetProgramVariable("inV0", vel);
-                            }
-                            else
-                            {
-                                float vel = Mathf.Pow(power * 2.0f, 1.4f) * 4.0f;
-                                if (Networking.LocalPlayer != null && Networking.LocalPlayer.displayName == "metaphira") vel = vel / 4.0f * 10.0f;
-                                table.currentPhysicsManager.SetProgramVariable("inV0", vel);
-                            }
+                            float vel = Mathf.Pow(power * 2.0f, 1.4f) * 4.0f;
+                            table.currentPhysicsManager.SetProgramVariable("inV0", vel);
                             table.currentPhysicsManager.SendCustomEvent("_ApplyPhysics");
 
                             table._TriggerCueBallHit();

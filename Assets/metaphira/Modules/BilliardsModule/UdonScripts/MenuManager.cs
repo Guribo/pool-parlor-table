@@ -21,6 +21,7 @@ public class MenuManager : UdonSharpBehaviour
     [SerializeField] public UIButton button4Ball;
     [SerializeField] public UIButton button4BallJP;
     [SerializeField] public UIButton button4BallKR;
+    [SerializeField] public UIButton buttonSixReds;
     [SerializeField] public UIButton buttonTimerLeft;
     [SerializeField] public UIButton buttonTimerRight;
     [SerializeField] public UIButton buttonTeamsToggle;
@@ -79,6 +80,7 @@ public class MenuManager : UdonSharpBehaviour
         button8Ball._ResetPushButton();
         button9Ball._ResetPushButton();
         button4Ball._ResetPushButton();
+        buttonSixReds._ResetPushButton();
         button4BallJP._ResetPushButton();
         button4BallKR._ResetPushButton();
 
@@ -106,6 +108,12 @@ public class MenuManager : UdonSharpBehaviour
                 button4BallJP.gameObject.SetActive(true);
                 button4BallKR.gameObject.SetActive(true);
                 break;
+            case 4:
+                buttonSixReds._SetButtonPushed();
+                button4BallJP.gameObject.SetActive(false);
+                button4BallKR.gameObject.SetActive(false);
+                break;
+
         }
     }
 
@@ -197,6 +205,7 @@ public class MenuManager : UdonSharpBehaviour
         button4Ball.disableInteractions = isNormalPlayer;
         button4BallJP.disableInteractions = isNormalPlayer;
         button4BallKR.disableInteractions = isNormalPlayer;
+        buttonSixReds.disableInteractions = isNormalPlayer;
         buttonTeamsToggle.disableInteractions = isNormalPlayer;
         buttonGuidelineToggle.disableInteractions = isNormalPlayer;
         buttonLockingToggle.disableInteractions = isNormalPlayer;
@@ -257,6 +266,10 @@ public class MenuManager : UdonSharpBehaviour
             else if (button.name == "4BallKR")
             {
                 table._TriggerGameModeChanged(3);
+            }
+            else if (button.name == "Snooker6Red")
+            {
+                table._TriggerGameModeChanged(4);
             }
             else if (button.name == "TeamsToggle")
             {
