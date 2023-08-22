@@ -31,13 +31,14 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] [HideInInspector] public Color k_fabricColour_8ball, // v1.6: ( 0.3, 0.3, 0.3, 1.0 )
                                                     k_fabricColour_9ball, // v1.6: ( 0.1, 0.6, 1.0, 1.0 )
                                                     k_fabricColour_4ball; // v1.6: ( 0.15, 0.75, 0.3, 1.0 )
-
+    [Header("Textures")]
     [SerializeField] public Texture[] textureSets;
-    [SerializeField] public Texture snookerTexture;
     [SerializeField] public ModelData[] tableModels;
     [SerializeField] public Texture2D[] tableSkins;
     [SerializeField] public Texture2D[] cueSkins;
+    [HideInInspector][SerializeField] public Texture snookerTexture;
 
+    [Header("Snooker Spawn Positions")]
     [SerializeField] public Transform[] coloredPositions;
 
     [Header("Managers")]
@@ -49,12 +50,9 @@ public class BilliardsModule : UdonSharpBehaviour
     [SerializeField] public GraphicsManager graphicsManager;
     [SerializeField] public StandardPhysicsManager standardPhysicsManager;
     [SerializeField] public MenuManager menuManager;
-
-    [Header("Camera Module")]
     [SerializeField] public UdonSharpBehaviour cameraModule;
 
-    [Space(10)]
-    [Header("Sound Effects")]
+    [HideInInspector]
     [SerializeField] public AudioClip snd_Intro,
                                       snd_Sink,
                                       snd_NewTurn,
