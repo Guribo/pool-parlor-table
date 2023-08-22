@@ -1,11 +1,11 @@
 Pool Parlor Table
 
 Contributors:
-  Harry-T
-  Metaphira
-  Toasterly
-  Sacchan
-  Neko Mabel
+  Harry-T,
+  Metaphira,
+  Toasterly,
+  Sacchan,
+  Neko Mabel,
 
 How to use:
   Drag and drop prefab from metaphira/Prefab into any scene.
