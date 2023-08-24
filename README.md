@@ -12,6 +12,7 @@ Contributors:
   
   Neko Mabel
 
+
 How to use:
 
   Drag and drop prefab from metaphira/Prefab into any scene.
@@ -20,6 +21,7 @@ How to use:
   
     If it is you will have to redefine the desktop camera culling and collision layers.
 
+
 1.0.4 Update 
 
 Snooker Added,
@@ -27,6 +29,7 @@ Snooker Added,
 Fixed various issues,
 
 BilliardsModulee cleanup.
+
 
 Ruleset by:
 
