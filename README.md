@@ -1,40 +1,23 @@
-Pool Parlor Table
+# Pool Parlor Table
 
-Contributors:
+## Contributors:
+- Harry-T
+- Metaphira
+- Toasterly
+- Sacchan
+- Neko Mabel
 
-  Harry-T,
-  
-  Metaphira,
-  
-  Toasterly,
-  
-  Sacchan,
-  
-  Neko Mabel
+## How to Use:
+1. Drag and drop the prefab from `metaphira/Prefab` into any scene.
+2. Ensure that Layer 22 is free and not used by anything else.
+   - If it is taken, you will need to redefine the desktop camera culling and collision layers.
 
+## 1.0.4 Update:
+- Added Snooker
+- Fixed various issues
+- BilliardsModule cleanup
 
-How to use:
-
-  Drag and drop prefab from metaphira/Prefab into any scene.
-  
-  Make sure Layer 22 is free and not taken up by anything else.
-  
-    If it is you will have to redefine the desktop camera culling and collision layers.
-
-
-1.0.4 Update 
-
-Snooker Added,
-
-Fixed various issues,
-
-BilliardsModulee cleanup.
-
-
-Ruleset by:
-
-Sacchan - Coding 
-	
- 	https://ko-fi.com/sacchanvrc
- 
-Neko Mabel - Billiards Knowledge
+## Ruleset by:
+- Sacchan (Coding)
+  - [Support Sacchan on Ko-fi](https://ko-fi.com/sacchanvrc)
+- Neko Mabel (Billiards Knowledge)
