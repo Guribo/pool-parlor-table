@@ -17,7 +17,7 @@
 - Fixed various issues
 - BilliardsModule cleanup
 
-## Ruleset by:
+##Six Reds Ruleset by:
 - Sacchan (Coding)
   - [Support Sacchan on Ko-fi](https://ko-fi.com/sacchanvrc)
 - Neko Mabel (Billiards Knowledge)
