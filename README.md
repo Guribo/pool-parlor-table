@@ -29,9 +29,9 @@ Fixed various issues,
 BilliardsModulee cleanup.
 
 Ruleset by:
-	Sacchan - Coding
- 
-		https://ko-fi.com/sacchanvrc
 
-	Neko Mabel - Billiards Knowledge
+Sacchan - Coding 
+	
+ 	https://ko-fi.com/sacchanvrc
  
+Neko Mabel - Billiards Knowledge
