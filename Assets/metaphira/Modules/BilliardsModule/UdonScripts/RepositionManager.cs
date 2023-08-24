@@ -10,6 +10,8 @@ public class RepositionManager : UdonSharpBehaviour
     private const float k_BALL_DSQR = 0.0036f;
     private const float k_BALL_RADIUS = 0.03f;
 
+    [SerializeField] private Transform snookerCircle;
+
     private BilliardsModule table;
 
     private int repositionCount;
@@ -27,6 +29,7 @@ public class RepositionManager : UdonSharpBehaviour
     public void _OnGameStarted()
     {
         repositionCount = 0;
+        table.isBreak = true;
         Array.Clear(repositioning, 0, repositioning.Length);
     }
 
@@ -95,6 +98,17 @@ public class RepositionManager : UdonSharpBehaviour
 
             if (!collides)
             {
+                if (table.isSnooker6Red && i == 0 && table.isBreak)
+                {
+                    Vector3 snookerCircleCenter = snookerCircle.transform.localPosition;
+                    float radius = 0.24f;
+
+                    bool isNewLocationInCircle = IsInSemiCircle(boundedLocation, snookerCircleCenter, radius);
+                    bool isCurrentLocationInCircle = IsInSemiCircle(table.ballsP[i], snookerCircleCenter, radius);
+
+                    boundedLocation.x = isNewLocationInCircle ? boundedLocation.x : (isCurrentLocationInCircle ? table.ballsP[i].x : snookerCircleCenter.x);
+                    boundedLocation.z = isNewLocationInCircle ? boundedLocation.z : (isCurrentLocationInCircle ? table.ballsP[i].z : snookerCircleCenter.z);
+                }
                 // no collisions, we can update the position and reset the pickup
                 table.ballsP[i] = boundedLocation;
 
@@ -103,7 +117,14 @@ public class RepositionManager : UdonSharpBehaviour
             }
         }
     }
+    private bool IsInSemiCircle(Vector3 location, Vector3 semiCircleCenter, float radius)
+    {
+        float distance = Vector3.Distance(location, semiCircleCenter);
 
+        if (distance < radius && location.x < semiCircleCenter.x)
+            return true;
+        return false;
+    }
     public void _BeginReposition(Repositioner grip)
     {
         if (!canReposition(grip))

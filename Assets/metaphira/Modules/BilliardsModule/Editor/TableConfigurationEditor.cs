@@ -4,13 +4,6 @@ using UnityEditor;
 [CustomEditor(typeof(TableConfiguration))]
 public class TableConfigurationEditor : Editor
 {
-    bool bShowTable = true;
-    bool bShowResource = false;
-    bool bResourceInit = false;
-    bool bShowCollision = false;
-
-    bool bAllowCompile = false;
-
     static GUIStyle styleHeader;
     static GUIStyle styleError;
     static GUIStyle styleWarning;
@@ -168,7 +161,6 @@ public class TableConfigurationEditor : Editor
         if (cfg != null)
         {
             SerializedObject obj = new SerializedObject(cfg);
-            bAllowCompile = true;
 
             Ht8bUIGroup("Table Models");
             SerializedProperty models = obj.FindProperty("models");

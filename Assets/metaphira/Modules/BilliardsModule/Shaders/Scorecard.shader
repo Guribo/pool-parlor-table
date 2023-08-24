@@ -5,7 +5,8 @@
       _EightBallTex("Eight Ball", 2D) = "White" {}
       _NineBallTex("Nine Ball", 2D) = "White" {}
       _FourBallTex("Four Ball", 2D) = "White" {}
-      [KeywordEnum(EightBall, NineBall, FourBall)] _GameMode("Gamemode", Int) = 0
+      _SnookerTex("Snooker", 2D) = "White" {}
+      [KeywordEnum(EightBall, NineBall, FourBall, Snooker)] _GameMode("Gamemode", Int) = 0
       _LeftScore("Left Score", Int) = 0
       _RightScore("Right Score", Int) = 0
       [KeywordEnum(Both, Left, Right)] _SolidsMode("Solids", Int) = 0
@@ -47,6 +48,7 @@
          sampler2D _EightBallTex;
          sampler2D _NineBallTex;
          sampler2D _FourBallTex;
+         sampler2D _SnookerTex;
          int _GameMode;
 
          int _SolidsMode;
@@ -100,6 +102,11 @@
                {
                   base = tex2D(_NineBallTex, i.uv);
                   break;
+               }
+               case 4:
+               {
+                   base = tex2D(_SnookerTex, i.uv);
+                   break;
                }
                default /*case 2, 3*/:
                {

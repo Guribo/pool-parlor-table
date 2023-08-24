@@ -13,6 +13,12 @@ public class GraphicsManager : UdonSharpBehaviour
     [SerializeField] Mesh fourBallMeshPlus;
     [SerializeField] Mesh fourBallMeshMinus;
 
+    [Header("Snooker")]
+    [SerializeField] public Text sixRedTextTeam1;
+    [SerializeField] public Text sixRedTextTeam2;
+    [SerializeField] public Text sixRedTextCurrent;
+    [SerializeField] public GameObject snookerLines;
+
     [Header("Text")]
     [SerializeField] GameObject scorecardHolder;
     [SerializeField] Text[] playerNames;
@@ -50,9 +56,6 @@ public class GraphicsManager : UdonSharpBehaviour
     private float fourBallPointTime;
 
     private float introAnimationTime = 0.0f;
-
-    private uint ANDROID_UNIFORM_CLOCK = 0x00u;
-    private uint ANDROID_CLOCK_DIVIDER = 0x8u;
 
     private VRCPlayerApi[] savedPlayers = new VRCPlayerApi[4];
 
@@ -232,16 +235,22 @@ public class GraphicsManager : UdonSharpBehaviour
         if (table.gameLive || !table.lobbyOpen) return;
 
         string settings = "";
-        switch (table.physicsModeLocal)
+        switch (table.gameModeLocal)
         {
-            case 0:
-                settings += "Legacy Physics";
+            case 0u:
+                settings += "8 Ball";
                 break;
-            case 1:
-                settings += "Standard Physics";
+            case 1u:
+                settings += "9 Ball";
                 break;
-            case 2:
-                settings += "Beta Physics";
+            case 2u:
+                settings += "4 Ball JP";
+                break;
+            case 3u:
+                settings += "4 Ball KR";
+                break;
+            case 4u:
+                settings += "Six Reds Snooker";
                 break;
         }
         if (!string.IsNullOrEmpty(table.tournamentRefereeLocal))
@@ -323,73 +332,8 @@ public class GraphicsManager : UdonSharpBehaviour
 
     public string _FormatName(string name)
     {
-        if (table.nameColorHook == null) return $"<color=#ffffff>{name}</color>";
-        if (name == null) return $"<color=#ffffff></color>";
-
-        table.nameColorHook.SetProgramVariable("inOwner", name);
-        table.nameColorHook.SendCustomEvent("_GetNameColor");
-
-        string color = (string) table.nameColorHook.GetProgramVariable("outColor");
-        if (color == "rainbow")
-        {
-            return rainbow(name);
-        }
-
-        return $"<color=#{color}>{name}</color>";
+        return $"<color=#ffffff>{name}</color>";
     }
-
-    private string rainbow(string name)
-    {
-        string[] colors = generateRainbow(name.Length);
-        for (int i = 0; i < name.Length; i++)
-        {
-            colors[i] = $"<color=#{colors[i]}>{name[i]}</color>";
-        }
-        return string.Join("", colors);
-    }
-
-    private string[] generateRainbow(int numColors)
-    {
-        string[] colors = new string[numColors];
-
-        float n = (float)numColors;
-        for(int i = 0; i < numColors; i++)
-        {
-            int red = 255;
-            int green = 0;
-            int blue = 0;
-            //red: (first quarter)
-            if (i <= n / 4)
-            {
-                red = 255;
-                green = (int)(255 / (n / 4) * i);
-                blue = 0;
-            }
-            else if (i <= n / 2)  //2nd quarter
-            {
-                red = (int)((-255)/(n/4)*i + 255 * 2);
-                green = 255;
-                blue = 0;
-            }
-            else if (i <= (.75)*n)
-            { // 3rd quarter
-                red = 0;
-                green = 255;
-                blue = (int)(255 / (n / 4) * i + (-255 * 2));
-            }
-            else if(i > (.75)*n)
-            {
-                red = 0;
-                green = (int)(-255 * i / (n / 4) + (255 * 4));
-                blue = 255;
-            }
-            
-            colors[i] = $"{red.ToString("X2")}{green.ToString("X2")}{blue.ToString("X2")}";
-        }
-        return colors;
-    }
-
-
     public void _HideScorecardHolder()
     {
         scorecardHolder.SetActive(false);
@@ -513,12 +457,12 @@ int uniform_cue_colour;
             }
         }
     }
-
     private void updateCues(uint idsrc)
     {
         if (table.is4Ball) updateFourBallCues();
         else if (table.is9Ball) updateNineBallCues();
         else if (table.is8Ball) updateEightBallCues(idsrc);
+        else if (table.isSnooker6Red) updateFourBallCues();
 
         if (table.isPracticeMode)
         {
@@ -546,7 +490,7 @@ int uniform_cue_colour;
 
     private void updateTable(uint teamId)
     {
-        if (table.is4Ball)
+        if (table.is4Ball || table.isSnooker6Red)
         {
             if ((teamId ^ table.teamColorLocal) == 0)
             {
@@ -640,6 +584,13 @@ int uniform_cue_colour;
             table.balls[14].SetActive(true);
             table.balls[15].SetActive(true);
         }
+        else if (table.isSnooker6Red)
+        {
+            for (int i = 0; i < 13; i++)
+                table.balls[i].SetActive(true);
+            for (int i = 13; i < 16; i++)
+                table.balls[i].SetActive(false);
+        }
         else
         {
             for (int i = 0; i < 16; i++)
@@ -671,6 +622,14 @@ int uniform_cue_colour;
         _UpdateTeamColor(0);
 
         lobbyStatusTextHolder.SetActive(false);
+
+        sixRedTextTeam1.text = "0";
+        sixRedTextTeam2.text = "0";
+        sixRedTextCurrent.text = "Sink Red Ball.";
+        sixRedTextTeam1.gameObject.SetActive(table.isSnooker6Red ? true : false);
+        sixRedTextTeam2.gameObject.SetActive(table.isSnooker6Red ? true : false);
+        sixRedTextCurrent.gameObject.SetActive(table.isSnooker6Red ? true : false);
+        snookerLines.gameObject.SetActive(table.isSnooker6Red ? true : false);
 
         if (table.is4Ball)
         {
@@ -714,6 +673,17 @@ int uniform_cue_colour;
             ballMaterial.SetTexture("_MainTex", table.textureSets[1]);
             pClothColour = table.k_fabricColour_4ball;
         }
+        else if (table.isSnooker6Red)
+        {
+            pColourErr = table.k_colour_default;
+            pColour2 = table.k_colour_default;
+
+            pColour0 = table.k_teamColour_spots;
+            pColour1 = table.k_teamColour_stripes;
+
+            ballMaterial.SetTexture("_MainTex", table.snookerTexture);
+            pClothColour = table.k_fabricColour_8ball;
+        }
         else // Standard 8 ball derivatives
         {
             pColourErr = table.k_colour_foul;
@@ -726,15 +696,7 @@ int uniform_cue_colour;
             pClothColour = table.k_fabricColour_8ball;
         }
 
-        if (table.table.name == "glass")
-        {
-            tableMaterial.SetColor(uniform_clothcolour, new Color(pClothColour.r, pClothColour.g, pClothColour.g, 117.0f / 255.0f));
-        }
-        else
-        {
-            tableMaterial.SetTexture("_MainTex", table.tableSkins[table.tableSkinLocal]);
-            // tableMaterial.SetColor(uniform_clothcolour, pClothColour);
-        }
+        tableMaterial.SetTexture("_MainTex", table.tableSkins[table.tableSkinLocal]);
     }
 
     public void _DisableObjects()
@@ -780,7 +742,19 @@ int uniform_cue_colour;
 
     public void _UpdateScorecard()
     {
-        if (table.is4Ball)
+        if (table.isSnooker6Red)
+        {
+            int nextcolor = table.sixRedFindLowestUnpocketedColor(table.ballsPocketedLocal);
+            bool redOnTable = table.sixRedCheckIfRedOnTable(table.ballsPocketedLocal);
+            sixRedTextTeam2.text = table.fbScoresLocal[0].ToString();
+            sixRedTextTeam1.text = table.fbScoresLocal[1].ToString();
+            sixRedTextTeam2.color = table.k_teamColour_spots;
+            sixRedTextTeam1.color = table.k_teamColour_stripes;
+            sixRedTextCurrent.text = table.networkingManager.colorTurnSynced ?
+                "Sink Colored Ball." : (redOnTable ?
+                "Sink Red Ball." : $"Sink {table.sixRedNumberToColor(nextcolor)} Ball.");
+        }
+        else if (table.is4Ball)
         {
             scorecard.SetInt("_LeftScore", table.fbScoresLocal[0]);
             scorecard.SetInt("_RightScore", table.fbScoresLocal[1]);

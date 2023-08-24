@@ -87,14 +87,13 @@ public class NetworkingManager : UdonSharpBehaviour
     // the current tournament referee
     [UdonSynced] [NonSerialized] public string tournamentRefereeSynced;
 
-    // the physics engine the table uses
-    [UdonSynced] [NonSerialized] public byte physicsModeSynced;
-
     // the current table model
     [UdonSynced] [NonSerialized] public byte tableModelSynced;
 
     // the current table skin
     [UdonSynced] [NonSerialized] public byte tableSkinSynced;
+
+    [UdonSynced] [NonSerialized] public bool colorTurnSynced;
 
     [SerializeField] private PlayerSlot[] playerSlots;
     
@@ -246,12 +245,12 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(true);
     }
 
-    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores)
+    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores, bool colorTurnLocal)
     {
         Array.Copy(ballsP, ballsPSynced, MAX_BALLS);
         Array.Copy(fbScores, fourBallScoresSynced, 2);
         ballsPocketedSynced = ballsPocketed;
-        
+        colorTurnSynced = colorTurnLocal;
         bufferMessages(false);
     }
 
@@ -446,7 +445,7 @@ public class NetworkingManager : UdonSharpBehaviour
     (
         int stateIdLocal,
         Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
-        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam
+        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurnLocal
     )
     {
         stateIdSynced = stateIdLocal;
@@ -466,17 +465,17 @@ public class NetworkingManager : UdonSharpBehaviour
         timerStartSynced = Networking.GetServerTimeInMilliseconds();
         simulationOwnerSynced = Networking.LocalPlayer.displayName;
         previewWinningTeamSynced = previewWinningTeam;
+        colorTurnSynced = colorTurnLocal;
 
         bufferMessages(true);
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it
     }
 
-    public void _OnGlobalSettingsChanged(string newTournamentReferee, byte newPhysicsMode, byte newTableModel, byte newTableSkin)
+    public void _OnGlobalSettingsChanged(string newTournamentReferee, byte newTableModel, byte newTableSkin)
     {
         if (Networking.LocalPlayer.displayName != playerNamesSynced[0]) return;
         
         tournamentRefereeSynced = newTournamentReferee;
-        physicsModeSynced = newPhysicsMode;
         tableModelSynced = newTableModel;
         tableSkinSynced = newTableSkin;
 
@@ -681,7 +680,7 @@ public class NetworkingManager : UdonSharpBehaviour
         if (!isValidBase64(gameStateStr)) return;
 
         byte[] gameState = Convert.FromBase64String(gameStateStr);
-        if (gameState.Length != 0x7a) return;
+        if (gameState.Length != 0x7b) return;
 
         stateIdSynced++;
 
@@ -704,13 +703,14 @@ public class NetworkingManager : UdonSharpBehaviour
         fourBallScoresSynced[0] = gameState[0x77];
         fourBallScoresSynced[1] = gameState[0x78];
         fourBallCueBallSynced = gameState[0x79];
+        colorTurnSynced = gameState[0x7a] != 0;
 
         bufferMessages(true);
     }
 
     public string _EncodeGameState()
     {
-        byte[] gameState = new byte[0x7a];
+        byte[] gameState = new byte[0x7b];
         for (int i = 0; i < 16; i++)
         {
             encodeVec3Full(gameState, i * 6, ballsPSynced[i], 2.5f);
@@ -730,6 +730,7 @@ public class NetworkingManager : UdonSharpBehaviour
         gameState[0x77] = (byte)fourBallScoresSynced[0];
         gameState[0x78] = (byte)fourBallScoresSynced[1];
         gameState[0x79] = fourBallCueBallSynced;
+        gameState[0x7a] = (byte)(colorTurnSynced ? 1 : 0);
 
         return "v2:" + Convert.ToBase64String(gameState, Base64FormattingOptions.None);
     }
