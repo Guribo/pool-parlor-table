@@ -778,10 +778,10 @@ MonoBehaviour:
         pcData:
           buildPath: C:\Users\xenhr\AppData\LocalLow\VRChat\VRChat\Worlds\scene-StandaloneWindows64-Pool
             Parlor Table.vrcw
-          buildHash: f74bb3a60a4b5b4fba6913c23da23e50
+          buildHash: fc68377c788ae60832f33661854d8089
           buildTime: 08/22/2023 17:19:40
           buildVersion: 40
-          buildSize: 2809569
+          buildSize: 2809542
           buildValid: 1
           buildInvalidReason: 
           blueprintID: wrld_ae336301-05e8-4c92-9cd4-b34b84549533

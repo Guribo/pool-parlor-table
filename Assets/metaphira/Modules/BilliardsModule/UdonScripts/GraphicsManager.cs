@@ -742,7 +742,19 @@ int uniform_cue_colour;
 
     public void _UpdateScorecard()
     {
-        if (table.is4Ball)
+        if (table.isSnooker6Red)
+        {
+            int nextcolor = table.sixRedFindLowestUnpocketedColor(table.ballsPocketedLocal);
+            bool redOnTable = table.sixRedCheckIfRedOnTable(table.ballsPocketedLocal);
+            sixRedTextTeam2.text = table.fbScoresLocal[0].ToString();
+            sixRedTextTeam1.text = table.fbScoresLocal[1].ToString();
+            sixRedTextTeam2.color = table.k_teamColour_spots;
+            sixRedTextTeam1.color = table.k_teamColour_stripes;
+            sixRedTextCurrent.text = table.networkingManager.colorTurnSynced ?
+                "Sink Colored Ball." : (redOnTable ?
+                "Sink Red Ball." : $"Sink {table.sixRedNumberToColor(nextcolor)} Ball.");
+        }
+        else if (table.is4Ball)
         {
             scorecard.SetInt("_LeftScore", table.fbScoresLocal[0]);
             scorecard.SetInt("_RightScore", table.fbScoresLocal[1]);
