@@ -1043,6 +1043,7 @@ public class BilliardsModule : UdonSharpBehaviour
         thirdHit = 0;
         fbMadePoint = false;
         fbMadeFoul = false;
+        isBreak = false;
         ballsPocketedOrig = ballsPocketedLocal;
         if (Networking.LocalPlayer.displayName == simulationOwner)
         {
@@ -1177,6 +1178,7 @@ public class BilliardsModule : UdonSharpBehaviour
 
         uint bmask = 0x1FCU << ((int)(teamIdLocal ^ teamColorLocal) * 7);
 
+
         if (isSnooker6Red)
         {
             bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig);
@@ -1229,7 +1231,6 @@ public class BilliardsModule : UdonSharpBehaviour
 
         _LogInfo("local simulation completed");
         cameraManager._OnLocalSimEnd();
-        isBreak = false;
         auto_colliderBaseVFX.SetActive(false);
 
         // Make sure we only run this from the client who initiated the move
@@ -1325,42 +1326,31 @@ public class BilliardsModule : UdonSharpBehaviour
             else /* if (isSnooker) */
             {
                 bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig),
-                     redOnTableAndColorTurn = redOnTable && colorTurnLocal,
                      redOnTableOrColorTurn = redOnTable || colorTurnLocal,
                      allBallsPocketed = ((ballsPocketedLocal & 0x1FFEu) == 0x1FFEu),
                      myTeamWinning;
 
-                int ballScore = 0,
-                    numBallsPocketed = 0,
+                int numBallsPocketed = 0,
+                    ballScore = 0,
                     highestPocketedBallScore = 0,
-                    firsthittype = sixRedCheckFirstHit(firstHit),
-                    pocketedBallTypes = sixRedCheckBallTypesPocketed(ballsPocketedOrig, ballsPocketedLocal),
                     nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
 
-                uint objective = 0x1E50u;
+                uint objective = colorTurnLocal ? 0x1AE : (redOnTable ? 0x1E50u : (uint)(1 << break_order_sixredsnooker[nextcolor]));
 
                 isOpponentSink = false;
 
-                objective = redOnTableAndColorTurn ? 0x1AE : (!redOnTableOrColorTurn ?
-                    (uint)(1 << break_order_sixredsnooker[nextcolor]) : (colorTurnLocal ?
-                    0x1AE : objective));
-
                 isObjectiveSink = (ballsPocketedLocal & (objective)) > (ballsPocketedOrig & (objective));
+
                 sixRedScoreBallsPocketed(ref ballScore, ref numBallsPocketed, ref highestPocketedBallScore);
 
-                foulCondition = (redOnTable && firsthittype == 0 && colorTurnLocal) ||
-                                (redOnTable && firsthittype == 1 && !colorTurnLocal) ||
-                                (redOnTable && pocketedBallTypes == 0 && colorTurnLocal) ||
-                                (redOnTable && pocketedBallTypes > 0 && !colorTurnLocal) ||
-                                (!redOnTable && firstHit != break_order_sixredsnooker[nextcolor] && !colorTurnLocal) ||
-                                (!redOnTable && (ballsPocketedOrig & 0x1AE) < (ballsPocketedLocal & (0x1AE - objective)) && !colorTurnLocal) ||
-                                (firsthittype == -1) ||
-                                (isScratch);
+                foulCondition = isSixRedFoul(objective, isScratch);
 
+                bool isMyScoreValid = fbScoresLocal[teamIdLocal] <= 200;
+                bool isEnemyScoreValid = fbScoresLocal[1 - teamIdLocal] <= 200;
                 if (foulCondition)
-                    fbScoresLocal[1 - teamIdLocal] += Math.Max(ballScore, 4);
+                    fbScoresLocal[1 - teamIdLocal] += isEnemyScoreValid ? Math.Max(ballScore, 4) : 0;
                 else
-                    fbScoresLocal[teamIdLocal] += ballScore;
+                    fbScoresLocal[teamIdLocal] += isMyScoreValid ? ballScore : 0;
 
                 if (redOnTableOrColorTurn || foulCondition)
                     sixRedReturnColoredBalls(foulCondition ? nextcolor : 6);
@@ -1368,8 +1358,7 @@ public class BilliardsModule : UdonSharpBehaviour
                 if (isScratch)
                     ballsP[0] = initialPositions[4][0];
 
-                colorTurnLocal = (redOnTable && isObjectiveSink && !foulCondition) ?
-                    !colorTurnLocal : false;
+                colorTurnLocal = (redOnTable && isObjectiveSink && !foulCondition) ? !colorTurnLocal : false;
 
                 myTeamWinning = fbScoresLocal[teamIdLocal] > fbScoresLocal[1 - teamIdLocal];
 
@@ -1381,19 +1370,61 @@ public class BilliardsModule : UdonSharpBehaviour
             }
             networkingManager._OnSimulationEnded(ballsP, ballsPocketedLocal, fbScoresLocal, colorTurnLocal);
 
-            if (winCondition || deferLossCondition)
-                onLocalTeamWin(foulCondition || deferLossCondition ? teamIdLocal ^ 0x1U : teamIdLocal);
+            if (winCondition)
+            {
+                if (foulCondition)
+                {
+                    // Loss
+                    onLocalTeamWin(teamIdLocal ^ 0x1U);
+                }
+                else
+                {
+                    // Win
+                    onLocalTeamWin(teamIdLocal);
+                }
+            }
+            else if (deferLossCondition)
+            {
+                // Loss
+                onLocalTeamWin(teamIdLocal ^ 0x1U);
+            }
             else if (foulCondition)
+            {
+                // Foul
                 onLocalTurnFoul();
+            }
             else if (isObjectiveSink && !isOpponentSink)
+            {
+                // Continue
                 onLocalTurnContinue();
+            }
             else
+            {
+                // Pass
                 onLocalTurnPass();
+            }
         }
     }
     #endregion
 
     #region sixRedSnooker
+    private bool isSixRedFoul(uint objective, bool isScratch)
+    {
+        bool redOnTable = sixRedCheckIfRedOnTable(ballsPocketedOrig);
+
+        int firsthittype = sixRedCheckFirstHit(firstHit),
+            pocketedBallTypes = sixRedCheckBallTypesPocketed(ballsPocketedOrig, ballsPocketedLocal),
+            nextcolor = sixRedFindLowestUnpocketedColor(ballsPocketedOrig);
+
+        return (redOnTable && firsthittype == 0 && colorTurnLocal) ||
+                (redOnTable && firsthittype == 1 && !colorTurnLocal) ||
+                (redOnTable && pocketedBallTypes == 0 && colorTurnLocal) ||
+                (redOnTable && pocketedBallTypes > 0 && !colorTurnLocal) ||
+                (!redOnTable && firstHit != break_order_sixredsnooker[nextcolor] && !colorTurnLocal) ||
+                (!redOnTable && (ballsPocketedOrig & 0x1AE) < (ballsPocketedLocal & (0x1AE - objective)) && !colorTurnLocal) ||
+                (firsthittype == -1) ||
+                (isScratch);
+    }
     public string sixRedNumberToColor(int ball)
     {
         string[] ballColors = new string[]
@@ -1410,10 +1441,9 @@ public class BilliardsModule : UdonSharpBehaviour
     }
     public int sixRedFindLowestUnpocketedColor(uint field)
     {
-        bool isLowestUnpocketed;
         for (int i = 6; i < break_order_sixredsnooker.Length; i++)
         {
-            isLowestUnpocketed = ((field >> break_order_sixredsnooker[i]) & 0x1U) == 0x00U;
+            bool isLowestUnpocketed = ((field >> break_order_sixredsnooker[i]) & 0x1U) == 0x00U;
             if (isLowestUnpocketed)
                 return i;
         }
@@ -1421,29 +1451,25 @@ public class BilliardsModule : UdonSharpBehaviour
     }
     public bool sixRedCheckIfRedOnTable(uint field)
     {
-        bool isBallOntable;
         for (int i = 0; i < 6; i++)
-        {
-            isBallOntable = ((field >> break_order_sixredsnooker[i]) & 0x1U) == 0x00U;
-            if (isBallOntable)
+            if (((field >> break_order_sixredsnooker[i]) & 0x1U) == 0x00U)
                 return true;
-        }
         return false;
     }
     public int sixRedCheckFirstHit(int firstHit)
     {
         uint firstHitball = (uint)1 << firstHit;
-        bool firstHitRed = (firstHitball & 0x1E50u) > 0;
-        bool firstHitColor = (firstHitball & 0x1AE) > 0;
-
-        return firstHitRed ? 0 : firstHitColor ? 1 : -1;
+        if ((firstHitball & 0x1E50u) > 0)
+            return 0;
+        if ((firstHitball & 0x1AE) > 0)
+            return 1;
+        return -1;
     }
     public void sixRedReturnColoredBalls(int from)
     {
-        bool isBallInBreakOrder;
         for (int i = from; i < break_order_sixredsnooker.Length; i++)
         {
-            isBallInBreakOrder = (ballsPocketedLocal & (1 << break_order_sixredsnooker[i])) > 0;
+            bool isBallInBreakOrder = (ballsPocketedLocal & (1 << break_order_sixredsnooker[i])) > 0;
 
             if (!isBallInBreakOrder)
                 continue;
@@ -1452,23 +1478,19 @@ public class BilliardsModule : UdonSharpBehaviour
             ballsPocketedLocal = ballsPocketedLocal ^ (1u << break_order_sixredsnooker[i]);
         }
     }
-    public void sixRedScoreBallsPocketed(ref int ballscore, ref int numBallsPocketed, ref int highestScoringBall)
+    public void sixRedScoreBallsPocketed(ref int ballScore, ref int highestScoringBall, ref int numBallsPocketed)
     {
-        bool isBallPocketted;
-        bool highestLessThanBallPoint;
         for (int i = 1; i < 13; i++)
         {
-            isBallPocketted = (ballsPocketedLocal & (1 << i)) > (ballsPocketedOrig & (1 << i));
+            bool isBallPocketted = (ballsPocketedLocal & (1 << i)) > (ballsPocketedOrig & (1 << i));
 
             if (!isBallPocketted)
                 continue;
 
-            highestLessThanBallPoint = highestScoringBall < sixredsnooker_ballpoints[i];
-
-            if (highestLessThanBallPoint)
+            if (highestScoringBall < sixredsnooker_ballpoints[i])
                 highestScoringBall = sixredsnooker_ballpoints[i];
 
-            ballscore += sixredsnooker_ballpoints[i];
+            ballScore += sixredsnooker_ballpoints[i];
             numBallsPocketed++;
         }
     }
@@ -1478,23 +1500,19 @@ public class BilliardsModule : UdonSharpBehaviour
         bool coloredBallPocket = (ballsPocketedOrig & 0x1AE) < (ballsPocketedLocal & 0x1AE);
         bool bothPocket = (coloredBallPocket && redBallPocket);
 
-        return bothPocket ? 
-          2 : (coloredBallPocket ?
-          1 : (redBallPocket ? 
-          0 : 
-         -1 ));
+        return bothPocket ? 2 : (coloredBallPocket ? 1 : (redBallPocket ? 0 : -1));
     }
     private void sixRedMoveBallUntilNotTouching(int Ball)
     {
-        int blockingBall = CheckIfBallTouchingBall(Ball);
         ballsP[Ball] = initialPositions[4][Ball];
-        if (blockingBall < 0)
+        int blockingBall = CheckIfBallTouchingBall(Ball);
+        if (CheckIfBallTouchingBall(Ball) < 0)
             return;
 
         for (int i = break_order_sixredsnooker.Length - 1; i > 5; i--)
         {
             ballsP[Ball] = initialPositions[4][break_order_sixredsnooker[i]];
-            if (blockingBall < 0)
+            if (CheckIfBallTouchingBall(Ball) < 0)
                 return;
         }
 
@@ -1505,18 +1523,19 @@ public class BilliardsModule : UdonSharpBehaviour
             moveDir = Vector3.left;
 
         moveDir = moveDir.normalized;
-
+        moveBallInDirUntilNotTouching(Ball, moveDir * k_BALL_RADIUS * .051f);
+    }
+    private void moveBallInDirUntilNotTouching(int Ball, Vector3 Dir)
+    {
         while (CheckIfBallTouchingBall(Ball) > 0)
-            ballsP[Ball] += (moveDir * k_BALL_RADIUS * .051f);
+            ballsP[Ball] += Dir;
     }
     private int CheckIfBallTouchingBall(int Input)
     {
-        bool isNotCorrectBall,
-             isBallTouching;
-
-        float ballDiameter = k_BALL_RADIUS * 2f,
-              k_BALL_DSQR = ballDiameter * ballDiameter;
-
+        bool isNotCorrectBall;
+        bool isBallTouching;
+        float ballDiameter = k_BALL_RADIUS * 2f;
+        float k_BALL_DSQR = ballDiameter * ballDiameter;
         for (int i = 1; i < 16; i++)
         {
             isNotCorrectBall = ((ballsPocketedLocal >> i) & 0x1u) == 0x1u || i == Input;
@@ -1598,7 +1617,6 @@ public class BilliardsModule : UdonSharpBehaviour
     }
     private void _SnookerRackLogic()
     {
-        isBreak = true;
         // Snooker
         initialBallsPocketed[4] = 0xE000u;
 

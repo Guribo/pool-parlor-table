@@ -616,6 +616,16 @@ public class StandardPhysicsManager : UdonSharpBehaviour
                 }
             }
         }
+        else if (table.isSnooker6Red)
+        {
+            for (int i = 1; i <= 12; i++)
+            {
+                if ((balls_P[0] - balls_P[i]).sqrMagnitude < k_BALL_DSQR)
+                {
+                    return true;
+                }
+            }
+        }
         else // 4
         {
             if ((balls_P[0] - balls_P[9]).sqrMagnitude < k_BALL_DSQR)

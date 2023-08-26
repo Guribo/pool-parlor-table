@@ -457,12 +457,24 @@ int uniform_cue_colour;
             }
         }
     }
+    private void updateSnookerCues()
+    {
+        if (table.isPracticeMode)
+        {
+            cueBodyRenderers[0].material.SetColor(uniform_cue_colour, (table.teamIdLocal == 0 ? pColour0 : pColour1));
+        }
+        else
+        {
+            cueBodyRenderers[table.teamIdLocal].material.SetColor(uniform_cue_colour, pColour0);
+            cueBodyRenderers[table.teamIdLocal ^ 0x1u].material.SetColor(uniform_cue_colour, pColour1);
+        }
+    }
     private void updateCues(uint idsrc)
     {
         if (table.is4Ball) updateFourBallCues();
         else if (table.is9Ball) updateNineBallCues();
         else if (table.is8Ball) updateEightBallCues(idsrc);
-        else if (table.isSnooker6Red) updateFourBallCues();
+        else if (table.isSnooker6Red) updateSnookerCues();
 
         if (table.isPracticeMode)
         {
@@ -490,7 +502,7 @@ int uniform_cue_colour;
 
     private void updateTable(uint teamId)
     {
-        if (table.is4Ball || table.isSnooker6Red)
+        if (table.is4Ball)
         {
             if ((teamId ^ table.teamColorLocal) == 0)
             {
