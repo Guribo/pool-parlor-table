@@ -95,6 +95,10 @@ public class NetworkingManager : UdonSharpBehaviour
 
     [UdonSynced] [NonSerialized] public bool colorTurnSynced;
 
+    [UdonSynced] [NonSerialized] public bool redsOnTableSynced;
+
+    [UdonSynced][NonSerialized] public int nextColorSynced;
+
     [SerializeField] private PlayerSlot[] playerSlots;
     
     private BilliardsModule table;
@@ -245,12 +249,14 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(true);
     }
 
-    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores, bool colorTurnLocal)
+    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores, bool colorTurnLocal, bool redsOnTable, int nextColor)
     {
         Array.Copy(ballsP, ballsPSynced, MAX_BALLS);
         Array.Copy(fbScores, fourBallScoresSynced, 2);
         ballsPocketedSynced = ballsPocketed;
         colorTurnSynced = colorTurnLocal;
+        redsOnTableSynced = redsOnTable;
+        nextColorSynced = nextColor;
         bufferMessages(false);
     }
 
@@ -346,7 +352,6 @@ public class NetworkingManager : UdonSharpBehaviour
     public void _OnLobbyClosed()
     {
         gameStateSynced = 0;
-
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             playerNamesSynced[i] = "";
@@ -364,6 +369,9 @@ public class NetworkingManager : UdonSharpBehaviour
         ballsPocketedSynced = defaultBallsPocketed;
         repositionStateSynced = 1;
         turnStateSynced = 0;
+        nextColorSynced = 0;
+        redsOnTableSynced = true;
+        colorTurnSynced = false;
         isTableOpenSynced = true;
         teamIdSynced = 0;
         fourBallCueBallSynced = 0;
@@ -445,7 +453,7 @@ public class NetworkingManager : UdonSharpBehaviour
     (
         int stateIdLocal,
         Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
-        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurnLocal
+        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurnLocal, bool redsOnTable, int nextColor
     )
     {
         stateIdSynced = stateIdLocal;
@@ -466,6 +474,8 @@ public class NetworkingManager : UdonSharpBehaviour
         simulationOwnerSynced = Networking.LocalPlayer.displayName;
         previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurnLocal;
+        redsOnTableSynced = redsOnTable;
+        nextColorSynced = nextColor;
 
         bufferMessages(true);
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it
@@ -680,7 +690,7 @@ public class NetworkingManager : UdonSharpBehaviour
         if (!isValidBase64(gameStateStr)) return;
 
         byte[] gameState = Convert.FromBase64String(gameStateStr);
-        if (gameState.Length != 0x7b) return;
+        if (gameState.Length != 0x7d) return;
 
         stateIdSynced++;
 
@@ -704,13 +714,15 @@ public class NetworkingManager : UdonSharpBehaviour
         fourBallScoresSynced[1] = gameState[0x78];
         fourBallCueBallSynced = gameState[0x79];
         colorTurnSynced = gameState[0x7a] != 0;
+        redsOnTableSynced = gameState[0x7b] != 0;
+        nextColorSynced = gameState[0x7c];
 
         bufferMessages(true);
     }
 
     public string _EncodeGameState()
     {
-        byte[] gameState = new byte[0x7b];
+        byte[] gameState = new byte[0x7d];
         for (int i = 0; i < 16; i++)
         {
             encodeVec3Full(gameState, i * 6, ballsPSynced[i], 2.5f);
@@ -731,6 +743,8 @@ public class NetworkingManager : UdonSharpBehaviour
         gameState[0x78] = (byte)fourBallScoresSynced[1];
         gameState[0x79] = fourBallCueBallSynced;
         gameState[0x7a] = (byte)(colorTurnSynced ? 1 : 0);
+        gameState[0x7b] = (byte)(redsOnTableSynced ? 1 : 0);
+        gameState[0x7c] = (byte)nextColorSynced;
 
         return "v2:" + Convert.ToBase64String(gameState, Base64FormattingOptions.None);
     }

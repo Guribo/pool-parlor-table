@@ -756,15 +756,13 @@ int uniform_cue_colour;
     {
         if (table.isSnooker6Red)
         {
-            int nextcolor = table.sixRedFindLowestUnpocketedColor(table.ballsPocketedLocal);
-            bool redOnTable = table.sixRedCheckIfRedOnTable(table.ballsPocketedLocal);
             sixRedTextTeam2.text = table.fbScoresLocal[0].ToString();
             sixRedTextTeam1.text = table.fbScoresLocal[1].ToString();
             sixRedTextTeam2.color = table.k_teamColour_spots;
             sixRedTextTeam1.color = table.k_teamColour_stripes;
             sixRedTextCurrent.text = table.networkingManager.colorTurnSynced ?
-                "Sink Colored Ball." : (redOnTable ?
-                "Sink Red Ball." : $"Sink {table.sixRedNumberToColor(nextcolor)} Ball.");
+                "Sink Colored Ball." : (table.networkingManager.redsOnTableSynced ?
+                "Sink Red Ball." : $"Sink {table.sixRedNumberToColor(table.networkingManager.nextColorSynced)} Ball.");
         }
         else if (table.is4Ball)
         {
