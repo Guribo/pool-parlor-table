@@ -16,6 +16,8 @@
 - Added Snooker
 - Fixed various issues
 - BilliardsModule cleanup
+### 1.0.4b:
+- Fixed various issues with snooker.
 
 ## Six Reds Ruleset by:
 - Sacchan (Coding)
