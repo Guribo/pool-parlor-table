@@ -97,8 +97,6 @@ public class NetworkingManager : UdonSharpBehaviour
 
     [UdonSynced] [NonSerialized] public bool redsOnTableSynced;
 
-    [UdonSynced][NonSerialized] public int nextColorSynced;
-
     [SerializeField] private PlayerSlot[] playerSlots;
     
     private BilliardsModule table;
@@ -249,14 +247,13 @@ public class NetworkingManager : UdonSharpBehaviour
         bufferMessages(true);
     }
 
-    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores, bool colorTurnLocal, bool redsOnTable, int nextColor)
+    public void _OnSimulationEnded(Vector3[] ballsP, uint ballsPocketed, int[] fbScores, bool colorTurnLocal, bool redsOnTable)
     {
         Array.Copy(ballsP, ballsPSynced, MAX_BALLS);
         Array.Copy(fbScores, fourBallScoresSynced, 2);
         ballsPocketedSynced = ballsPocketed;
         colorTurnSynced = colorTurnLocal;
         redsOnTableSynced = redsOnTable;
-        nextColorSynced = nextColor;
         bufferMessages(false);
     }
 
@@ -369,7 +366,6 @@ public class NetworkingManager : UdonSharpBehaviour
         ballsPocketedSynced = defaultBallsPocketed;
         repositionStateSynced = 1;
         turnStateSynced = 0;
-        nextColorSynced = 0;
         redsOnTableSynced = true;
         colorTurnSynced = false;
         isTableOpenSynced = true;
@@ -690,7 +686,7 @@ public class NetworkingManager : UdonSharpBehaviour
         if (!isValidBase64(gameStateStr)) return;
 
         byte[] gameState = Convert.FromBase64String(gameStateStr);
-        if (gameState.Length != 0x7d) return;
+        if (gameState.Length != 0x7c) return;
 
         stateIdSynced++;
 
@@ -715,14 +711,13 @@ public class NetworkingManager : UdonSharpBehaviour
         fourBallCueBallSynced = gameState[0x79];
         colorTurnSynced = gameState[0x7a] != 0;
         redsOnTableSynced = gameState[0x7b] != 0;
-        nextColorSynced = gameState[0x7c];
 
         bufferMessages(true);
     }
 
     public string _EncodeGameState()
     {
-        byte[] gameState = new byte[0x7d];
+        byte[] gameState = new byte[0x7c];
         for (int i = 0; i < 16; i++)
         {
             encodeVec3Full(gameState, i * 6, ballsPSynced[i], 2.5f);
@@ -744,7 +739,6 @@ public class NetworkingManager : UdonSharpBehaviour
         gameState[0x79] = fourBallCueBallSynced;
         gameState[0x7a] = (byte)(colorTurnSynced ? 1 : 0);
         gameState[0x7b] = (byte)(redsOnTableSynced ? 1 : 0);
-        gameState[0x7c] = (byte)nextColorSynced;
 
         return "v2:" + Convert.ToBase64String(gameState, Base64FormattingOptions.None);
     }
