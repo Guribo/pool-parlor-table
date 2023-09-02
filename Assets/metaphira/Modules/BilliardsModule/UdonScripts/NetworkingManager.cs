@@ -449,7 +449,7 @@ public class NetworkingManager : UdonSharpBehaviour
     (
         int stateIdLocal,
         Vector3[] newBallsP, uint ballsPocketed, int[] newScores, uint gameMode, uint teamId, uint repositionState, bool isTableOpen, uint teamColor, uint fourBallCueBall,
-        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurnLocal, bool redsOnTable, int nextColor
+        byte turnStateLocal, Vector3 cueBallV, Vector3 cueBallW, byte previewWinningTeam, bool colorTurnLocal, bool redsOnTable
     )
     {
         stateIdSynced = stateIdLocal;
@@ -471,7 +471,6 @@ public class NetworkingManager : UdonSharpBehaviour
         previewWinningTeamSynced = previewWinningTeam;
         colorTurnSynced = colorTurnLocal;
         redsOnTableSynced = redsOnTable;
-        nextColorSynced = nextColor;
 
         bufferMessages(true);
         // OnDeserialization(); // jank! force deserialization so the practice manager knows to ignore it
