@@ -2055,10 +2055,10 @@ public class BilliardsModule : UdonSharpBehaviour
         Array.Copy(ballsP, positionClone, ballsP.Length);
         int[] scoresClone = new int[fbScoresLocal.Length];
         Array.Copy(fbScoresLocal, scoresClone, fbScoresLocal.Length);
-        return new object[16]
+        return new object[15]
         {
             positionClone, ballsPocketedLocal, scoresClone, gameModeLocal, teamIdLocal, repositionStateLocal, isTableOpenLocal, teamColorLocal, fourBallCueBallLocal,
-            turnStateLocal, networkingManager.cueBallVSynced, networkingManager.cueBallWSynced, networkingManager.previewWinningTeamSynced, networkingManager.colorTurnSynced, networkingManager.redsOnTableSynced, networkingManager.nextColorSynced
+            turnStateLocal, networkingManager.cueBallVSynced, networkingManager.cueBallWSynced, networkingManager.previewWinningTeamSynced, networkingManager.colorTurnSynced, networkingManager.redsOnTableSynced
         };
     }
 
@@ -2067,7 +2067,7 @@ public class BilliardsModule : UdonSharpBehaviour
         networkingManager._ForceLoadFromState(
             stateIdLocal,
             (Vector3[])state[0], (uint)state[1], (int[])state[2], (uint)state[3], (uint)state[4], (uint)state[5], (bool)state[6], (uint)state[7], (uint)state[8],
-            (byte)state[9], (Vector3)state[10], (Vector3)state[11], (byte)state[12], (bool)state[13], (bool)state[14], (int)state[15]
+            (byte)state[9], (Vector3)state[10], (Vector3)state[11], (byte)state[12], (bool)state[13], (bool)state[14]
         );
     }
 
