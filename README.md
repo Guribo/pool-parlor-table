@@ -12,7 +12,7 @@
 2. Ensure that Layer 22 is free and not used by anything else.
    - If it is taken, you will need to redefine the desktop camera culling and collision layers.
 
-##1.0.4 Warning: Currently there are some issues with the snooker ruleset, please use 1.0.3 for now until I fix them. It may take a little while as I'm working on improving the physics currently. -Toaster
+## 1.0.4 Warning: Currently there are some issues with the snooker ruleset, please use 1.0.3 for now until I fix them. It may take a little while as I'm working on improving the physics currently. -Toaster
 
 ## 1.0.4 Update:
 ### 1.0.4a:
